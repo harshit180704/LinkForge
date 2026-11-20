@@ -1,16 +1,18 @@
 from datetime import datetime
+from pydantic import BaseModel, EmailStr, Field, HttpUrl
 
-from pydantic import BaseModel, Field, HttpUrl
+class Credentials(BaseModel):
+    email: EmailStr
+    password: str = Field(min_length=10, max_length=128)
 
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
 
 class URLCreate(BaseModel):
     original_url: HttpUrl
-    custom_alias: str | None = Field(
-        default=None,
-        pattern=r"^[a-zA-Z0-9_-]{3,32}$",
-    )
+    custom_alias: str | None = Field(default=None, pattern=r"^[a-zA-Z0-9_-]{3,32}$")
     expires_at: datetime | None = None
-
 
 class URLResponse(BaseModel):
     id: int
@@ -20,5 +22,4 @@ class URLResponse(BaseModel):
     click_count: int
     created_at: datetime
     expires_at: datetime | None
-
     model_config = {"from_attributes": True}
