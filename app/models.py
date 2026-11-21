@@ -26,3 +26,9 @@ class ProcessedClick(Base):
     __tablename__ = "processed_clicks"
     event_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     processed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+class ClickEvent(Base):
+    __tablename__ = "click_events"
+    event_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    url_id: Mapped[int] = mapped_column(BigInteger, index=True, nullable=False)
+    clicked_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True, nullable=False)

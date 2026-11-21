@@ -11,6 +11,7 @@ async function request<T>(path:string, options:RequestInit={}, token?:string):Pr
  return response.json() as Promise<T>;
 }
 export const api={
+ analytics:(token:string)=>request<{timezone:string;daily:{date:string;clicks:number}[]}>('/analytics/clicks',{},token),
  register:(email:string,password:string)=>request<{access_token:string}>('/auth/register',{method:'POST',body:JSON.stringify({email,password})}),
  login:(email:string,password:string)=>request<{access_token:string}>('/auth/login',{method:'POST',body:JSON.stringify({email,password})}),
  list:(token:string)=>request<Link[]>('/urls',{},token),

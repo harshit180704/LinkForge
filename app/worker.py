@@ -3,7 +3,7 @@ import time
 from sqlalchemy import update
 from sqlalchemy.exc import IntegrityError
 from app.database import SessionLocal
-from app.models import ProcessedClick, ShortURL
+from app.models import ClickEvent, ProcessedClick, ShortURL
 from app.redis_client import client
 
 logging.basicConfig(level=logging.INFO)
@@ -16,6 +16,7 @@ def process(event_id: str, url_id: int):
     with SessionLocal() as db:
         try:
             db.add(ProcessedClick(event_id=event_id))
+            db.add(ClickEvent(event_id=event_id, url_id=url_id))
             db.flush()  # unique event ID makes retries idempotent
             db.execute(update(ShortURL).where(ShortURL.id == url_id).values(
                 click_count=ShortURL.click_count + 1

@@ -1,17 +1,17 @@
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 import json
 import secrets
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import RedirectResponse
-from sqlalchemy import select, text
+from sqlalchemy import select, text, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.auth import current_user, hash_password, make_token, verify_password
 from app.database import Base, engine, get_db, settings
-from app.models import ShortURL, User
+from app.models import ClickEvent, ShortURL, User
 from app.redis_client import client as redis_client
 from app.schemas import Credentials, Token, URLCreate, URLResponse
 from app.shortener import encode_base62
@@ -171,3 +171,24 @@ def dashboard_url_list(db: Session = Depends(get_db), user: User = Depends(curre
         select(ShortURL).where(ShortURL.owner_id == user.id).order_by(ShortURL.created_at.desc())
     ).all()
     return [response_for(url) for url in urls]
+
+@app.get("/api/v1/analytics/clicks")
+def dashboard_click_analytics(db: Session = Depends(get_db), user: User = Depends(current_user)):
+    """14-day UTC click histogram for the authenticated user's active links."""
+    today = datetime.now(timezone.utc).date()
+    first = today - timedelta(days=13)
+    start = datetime.combine(first, datetime.min.time(), tzinfo=timezone.utc)
+    utc_date = func.date(func.timezone("UTC", ClickEvent.clicked_at))
+    rows = db.execute(
+        select(utc_date.label("date"), func.count(ClickEvent.event_id))
+        .join(ShortURL, ShortURL.id == ClickEvent.url_id)
+        .where(ShortURL.owner_id == user.id, ClickEvent.clicked_at >= start)
+        .group_by(utc_date)
+        .order_by(utc_date)
+    ).all()
+    totals = {str(day): count for day, count in rows}
+    return {"timezone": "UTC", "daily": [
+        {"date": (first + timedelta(days=i)).isoformat(),
+         "clicks": totals.get((first + timedelta(days=i)).isoformat(), 0)}
+        for i in range(14)
+    ]}
