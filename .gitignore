@@ -11,3 +11,5 @@ backend-backup/
 *.dump
 
 analytics-backup/
+
+.env.docker
