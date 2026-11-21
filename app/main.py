@@ -163,3 +163,11 @@ def redirect(code: str, db: Session = Depends(get_db)):
     except Exception:
         pass
     return RedirectResponse(destination["url"], status_code=302)
+
+
+@app.get("/api/v1/urls", response_model=list[URLResponse])
+def dashboard_url_list(db: Session = Depends(get_db), user: User = Depends(current_user)):
+    urls = db.scalars(
+        select(ShortURL).where(ShortURL.owner_id == user.id).order_by(ShortURL.created_at.desc())
+    ).all()
+    return [response_for(url) for url in urls]
