@@ -15,3 +15,9 @@ analytics-backup/
 .env.docker
 
 linkforge_docker_deployment/
+
+# TypeScript build cache
+*.tsbuildinfo
+
+# Generated benchmark results
+benchmarks/results/
