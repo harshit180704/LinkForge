@@ -13,3 +13,5 @@ backend-backup/
 analytics-backup/
 
 .env.docker
+
+linkforge_docker_deployment/
